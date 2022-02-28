@@ -194,7 +194,7 @@ class KNearestNeighbor(object):
             
             c = Counter(closest_y)
             y_pred[i] = c.most_common(1)[0][0]
-            
+
             
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
