@@ -1,7 +1,6 @@
 from builtins import range
 import numpy as np
 from random import shuffle
-from past.builtins import xrange
 
 
 def softmax_loss_naive(W, X, y, reg):
@@ -33,8 +32,28 @@ def softmax_loss_naive(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    n_train = X.shape[0]
+    n_classes = W.shape[1]
+    # y_one_hot = np.zeros((n_train, n_classes))
+    # y_one_hot[np.arange(n_train), y.T] = 1
 
-    pass
+    # a = X.dot(W)
+    # exps = np.exp(a)
+    # p = exps / np.sum(exps, axis=1)[:, np.newaxis]
+
+    for i in range(n_train):
+        a = X[i] @ W
+        a_exp = np.exp(a - a.max())
+        softmax = a_exp / a_exp.sum()
+        loss -= np.log(softmax[y[i]])
+        softmax[y[i]] -= 1
+        dW += np.outer(X[i], softmax)
+
+    loss /= n_train
+    dW /= n_train
+
+    loss += reg * np.sum(W * W)
+    dW += 2 * reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -48,9 +67,11 @@ def softmax_loss_vectorized(W, X, y, reg):
     Inputs and outputs are the same as softmax_loss_naive.
     """
     # Initialize the loss and gradient to zero.
+    n_train = X.shape[0]
+    n_classes = W.shape[1]
+
     loss = 0.0
     dW = np.zeros_like(W)
-
     #############################################################################
     # TODO: Compute the softmax loss and its gradient using no explicit loops.  #
     # Store the loss in loss and the gradient in dW. If you are not careful     #
@@ -59,7 +80,24 @@ def softmax_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    # y_one_hot = np.zeros((n_train, n_classes))
+    # y_one_hot[np.arange(n_train), y] = 1
+
+    a = X.dot(W)
+    exps = np.exp(a-a.max())
+    p = exps / np.sum(exps, axis=1)[:, np.newaxis]
+
+    loss = np.sum(-np.log(p[np.arange(n_train), y]))
+
+    # dLda = p - y_one_hot
+    p[np.arange(n_train), y] -= 1
+    dW = np.dot(X.T, p)
+
+    loss /= n_train
+    dW /= n_train
+
+    loss += reg * np.sum(W * W)
+    dW += 2 * reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
