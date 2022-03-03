@@ -45,7 +45,10 @@ def sgd(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    lr = config['learning_rate']
+    # print(np.isnan(w).sum())
+    # print(np.sum(dw))
+    w -= lr * dw
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

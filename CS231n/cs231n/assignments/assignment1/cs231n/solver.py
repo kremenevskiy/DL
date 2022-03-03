@@ -104,7 +104,7 @@ class Solver(object):
         - batch_size: Size of minibatches used to compute loss and gradient
           during training.
         - num_epochs: The number of epochs to run for during training.
-        - print_every: Integer; training losses will be printed every
+        - print_every   various: Integer; training losses will be printed every
           print_every iterations.
         - verbose: Boolean; if set to false then no output will be printed
           during training.
@@ -129,6 +129,8 @@ class Solver(object):
         self.num_epochs = kwargs.pop("num_epochs", 10)
         self.num_train_samples = kwargs.pop("num_train_samples", 1000)
         self.num_val_samples = kwargs.pop("num_val_samples", None)
+
+        self.best_val_acc = -1
 
         self.checkpoint_name = kwargs.pop("checkpoint_name", None)
         self.print_every = kwargs.pop("print_every", 10)
@@ -260,6 +262,7 @@ class Solver(object):
         num_iterations = self.num_epochs * iterations_per_epoch
 
         for t in range(num_iterations):
+            # print('step: ', t)
             self._step()
 
             # Maybe print training loss
@@ -304,6 +307,7 @@ class Solver(object):
                     self.best_params = {}
                     for k, v in self.model.params.items():
                         self.best_params[k] = v.copy()
+                    self.best_val_acc = val_acc
 
         # At the end of training swap the best params into the model
         self.model.params = self.best_params
