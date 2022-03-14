@@ -23,16 +23,16 @@ class FullyConnectedNet(object):
     """
 
     def __init__(
-        self,
-        hidden_dims,
-        input_dim=3 * 32 * 32,
-        num_classes=10,
-        dropout_keep_ratio=1,
-        normalization=None,
-        reg=0.0,
-        weight_scale=1e-2,
-        dtype=np.float32,
-        seed=None,
+            self,
+            hidden_dims,
+            input_dim=3 * 32 * 32,
+            num_classes=10,
+            dropout_keep_ratio=1,
+            normalization=None,
+            reg=0.0,
+            weight_scale=1e-2,
+            dtype=np.float32,
+            seed=None,
     ):
         """Initialize a new FullyConnectedNet.
 
@@ -74,14 +74,17 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        n_hid = len(hidden_dims)
-        self.params['W0'] = np.random.normal(0, weight_scale, (input_dim, hidden_dims[0]))
-        self.params['b0'] = np.zeros(hidden_dims[0])
-        for i in range(0, n_hid-1):
-            self.params[f'W{i+1}'] = np.random.normal(0, weight_scale, (hidden_dims[i], hidden_dims[i+1]))
-            self.params[f'b{i+1}'] = np.zeros(hidden_dims[i+1])
-        self.params[f'W{n_hid}'] = np.random.normal(0, weight_scale, (hidden_dims[-1], num_classes))
-        self.params[f'b{n_hid}'] = np.zeros(num_classes)
+        # self.params['W1'] = np.random.normal(0, weight_scale, (input_dim, hidden_dims[0]))
+        # self.params['b1'] = np.zeros(hidden_dims[0])
+        # for i in range(1, self.num_layers-1):
+        #     self.params[f'W{i+1}'] = np.random.normal(0, weight_scale, (hidden_dims[i-1], hidden_dims[i]))
+        #     self.params[f'b{i+1}'] = np.zeros(hidden_dims[i])
+        # self.params[f'W{self.num_layers}'] = np.random.normal(0, weight_scale, (hidden_dims[-1], num_classes))
+        # self.params[f'b{self.num_layers}'] = np.zeros(num_classes)
+
+        for l, (i, j) in enumerate(zip([input_dim, *hidden_dims], [*hidden_dims, num_classes])):
+            self.params[f'W{l + 1}'] = np.random.randn(i, j) * weight_scale
+            self.params[f'b{l + 1}'] = np.zeros(j)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -162,20 +165,16 @@ class FullyConnectedNet(object):
         affine_caches = []
         relu_caches = []
 
-        for i in range(self.num_layers-1):
-            print('forward %d' % i)
-            print(f'a shape: {a.shape}')
+        for i in range(1, self.num_layers):
             w, b = self.params[f'W{i}'], self.params[f'b{i}']
             affine_out, affine_cache = affine_forward(a, w, b)
-            a, relu_cache = relu_forward(a)
+            a, relu_cache = relu_forward(affine_out)
             affine_caches.append(affine_cache)
-            relu_caches.append(relu_caches)
-            loss_reg += np.sum(w*w)
+            relu_caches.append(relu_cache)
 
         w, b = self.params[f'W{self.num_layers}'], self.params[f'b{self.num_layers}']
-        loss_reg += np.sum(w)
         scores, affine_cache = affine_forward(a, w, b)
-        affine_caches.append(affine_caches)
+        affine_caches.append(affine_cache)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -203,24 +202,22 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         loss, grad = softmax_loss(scores, y)
-        loss /= N
-        loss += self.reg * loss_reg
+        loss += 0.5 * self.reg * np.sum([np.sum(W ** 2) for k, W in self.params.items() if 'W' in k])
 
         # backward pass
-        for i in range(self.num_layers-1, -1, -1):
+        dx, dw, db = affine_backward(grad, affine_caches.pop())
+        grads[f'W{self.num_layers}'] = dw
+        grads[f'b{self.num_layers}'] = db
+
+        grads[f'W{self.num_layers}'] += self.reg * self.params[f'W{self.num_layers}']
+
+        for i in range(self.num_layers - 1, 0, -1):
+            grad = relu_backward(dx, relu_caches.pop())
             dx, dw, db = affine_backward(grad, affine_caches.pop())
 
             grads[f'W{i}'] = dw
             grads[f'b{i}'] = db
-
-            ## add regularization
-            grads[f'W{i}'] += 2 * self.reg * self.params[f'W{i}']
-
-            if i == 0:
-                continue
-            grad = relu_backward(dx, relu_caches.pop())
-
-
+            grads[f'W{i}'] += self.reg * self.params[f'W{i}']
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
