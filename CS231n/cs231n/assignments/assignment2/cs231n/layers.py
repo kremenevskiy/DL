@@ -26,10 +26,10 @@ def affine_forward(x, w, b):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     N = x.shape[0]
     x_reshaped = x.reshape(N, -1)
-    print(x_reshaped.shape)
-    print(w.shape)
-    print()
-    out = x_reshaped @ w
+    # print(x_reshaped.shape)
+    # print(w.shape)
+    # print()
+    out = x_reshaped @ w + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -62,13 +62,12 @@ def affine_backward(dout, cache):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     N = x.shape[0]
     x_reshaped = x.reshape(N, -1)
-    dx = dout @ w.T
-    dx = dx.reshape(x.shape)
 
+    dx = (dout @ w.T).reshape(x.shape)
     dw = x_reshaped.T @ dout
+    db = dout.sum(axis=0)
 
-    db = dout.sum(axis=1)
-
+    # print(type(dx))
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -99,6 +98,7 @@ def relu_forward(x):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     cache = x
+
     return out, cache
 
 
@@ -118,7 +118,7 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    dx = (x > 0) * dout
+    dx = dout * (x > 0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -147,11 +147,17 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     N = x.shape[0]
-    probs = (x - x.max()) / x.sum(axis=1)
+    exps = np.exp(x - x.max(axis=1)[:, np.newaxis])
+    probs = exps / np.sum(exps, axis=1)[:, np.newaxis]
     loss = - np.sum(np.log(probs[np.arange(N), y]))
 
-    probs[np.arange(N), y] -= y
-    dx = probs
+    # compute grad
+    probs[np.arange(N), y] -= 1
+
+    loss /= N
+    dx = probs / N
+
+
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
