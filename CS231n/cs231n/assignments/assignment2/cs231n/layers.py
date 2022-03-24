@@ -454,7 +454,7 @@ def layernorm_backward(dout, cache):
 
 
 def dropout_forward(x, dropout_param):
-    
+
     """Forward pass for inverted dropout.
 
     Note that this is different from the vanilla version of dropout.
